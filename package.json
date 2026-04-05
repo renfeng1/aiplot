@@ -1,21 +1,33 @@
 {
-  "name": "website",
+  "name": "aiplot-fun",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint .",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "seed": "tsx prisma/seed.ts",
+    "init-admin": "tsx prisma/init-admin.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.10.0",
     "@ai-sdk/openai-compatible": "^2.0.38",
     "@ai-sdk/react": "^3.0.147",
-    "@clerk/nextjs": "^7.0.8",
     "@hookform/resolvers": "^5.2.2",
+    "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "@vercel/blob": "^2.3.3",
     "ai": "^6.0.145",
+    "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -23,12 +35,15 @@
     "lucide-react": "^1.7.0",
     "mammoth": "^1.12.0",
     "next": "16.2.2",
+    "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.4.6",
     "pdf-parse": "^2.4.5",
+    "pg": "^8.20.0",
     "radix-ui": "^1.4.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.72.1",
+    "server-only": "^0.0.1",
     "shadcn": "^4.1.2",
     "slugify": "^1.6.9",
     "sonner": "^2.0.7",
@@ -50,6 +65,7 @@
     "jsdom": "^29.0.1",
     "prisma": "^7.6.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5",
     "vitest": "^4.1.2"
   }
