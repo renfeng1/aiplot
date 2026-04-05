@@ -1,63 +1,208 @@
 # AIPLOT.FUN
 
-正式产品化的角色蒸馏与长期关系聊天系统。
+资料蒸馏成 Ta，时间把对话酿成关系。
 
-当前版本已移除所有 demo 角色和 demo 入口，只保留两类角色：
+AIPLOT.FUN is a production-style character distillation and long-memory chat app.  
+Upload documents, notes, screenshots, and photos, turn them into a living character, and keep the relationship growing through memory-aware conversation.
 
-- 公共角色：由 `SUPER_ADMIN` 创建和维护，所有登录用户可使用。
-- 我的角色：由普通用户创建，仅创建者本人可见、可编辑、可删除。
+## Why This Project Is Interesting
 
-## 技术栈
+Most "AI character" demos stop at a prompt and a chat box.
+
+This project goes further:
+
+- It distills messy source material into a structured character with persona, knowledge, voice style, and boundaries.
+- It keeps memory per `user × character`, so the same public character can remember different people differently.
+- It separates public characters from private ones, making the app work like a real product instead of a toy demo.
+- It includes quota control, usage tracking, admin tools, resumable creation flows, and deployable production plumbing.
+
+If you care about AI product design, long-term memory systems, or design-to-product execution, this repo is built to be studied, extended, and shipped.
+
+## Core Experience
+
+### 1. Distill raw material into a character
+
+Users can create a character from:
+
+- pasted text
+- `.txt`
+- `.md`
+- `.docx`
+- `.pdf`
+- screenshots
+- photos
+
+The app extracts text, performs OCR when needed, chunks the material, retrieves relevant parts, and distills the result into a character card.
+
+Each character includes:
+
+- identity and background
+- relationship framing toward the user
+- speaking style and tone
+- source-grounded memory summary
+- welcome message
+- voice style profile
+
+The distillation model is fixed to `gpt-5.4` for consistency.
+
+### 2. Chat that remembers
+
+The chat system is not just "append old messages into a prompt".
+
+For every `(userId, characterId)` pair, the app maintains:
+
+- short-term context from recent messages
+- long-term memories extracted from prior chats
+- rolling relationship summaries
+- retrieval-ready memory items with embeddings when available
+
+That means:
+
+- user A talking to public character X gets their own private memory trail
+- user B talking to the same public character X gets a separate one
+- user A talking to character Y does not leak into character X
+
+### 3. Product-style character system
+
+The app has two character spaces:
+
+- Public Characters
+  - created by admins
+  - available to all signed-in users
+  - ideal for site-wide featured characters
+- My Characters
+  - created by end users
+  - private by default
+  - fully isolated with their own conversation history and memory
+
+This makes the app feel like a real platform, not a preset-character showcase.
+
+### 4. Background creation flow
+
+Character creation runs in the background.
+
+Users can:
+
+- start a distillation job
+- leave the page
+- create another character
+- come back later and still see status
+
+The app preserves states such as:
+
+- creating
+- failed
+- completed
+
+and surfaces them in the "My Characters" views.
+
+## Pages
+
+### Homepage
+
+The landing page is positioned as a real product:
+
+- featured hero message
+- public character discovery
+- private character status recap for signed-in users
+
+### Characters
+
+`/characters` is split into:
+
+- Public Characters
+- My Characters
+
+The "My Characters" section shows creation states so unfinished jobs are never silently lost.
+
+### Create
+
+`/create` supports:
+
+- source upload
+- pasted text
+- source format selection
+- relationship hint input
+- resumable background creation
+
+Admins automatically create public characters here.  
+Regular users automatically create private characters.
+
+### Chat
+
+`/chat/[slug]` restores the active conversation for the current user and character, and injects:
+
+- recent chat context
+- character profile
+- relationship summary
+- retrieved long-term memories
+- source evidence
+
+### Me
+
+`/me` gives each user a lightweight dashboard for:
+
+- remaining quotas
+- recent usage
+- recent characters
+
+### Admin
+
+The admin side includes:
+
+- user management
+- per-user quota adjustment
+- default quota configuration
+- usage analytics
+- public character management
+
+It exists to support the product, not to dominate the product.
+
+## What Makes The Memory Layer Different
+
+The memory system is scoped by `userId + characterId`.
+
+It stores:
+
+- `Memory`
+  - atomic long-term memory items
+- `MemorySummary`
+  - rolling summary of user profile, relationship progression, and shared history
+- `MemoryEmbedding`
+  - retrieval vectors for semantic recall
+
+This keeps the app usable over long chats without letting prompts explode in size.
+
+## Tech Stack
 
 - Next.js 16.2.2
 - React 19
-- Prisma 7 + PostgreSQL
-- Auth.js Credentials
+- TypeScript
+- Prisma 7
+- PostgreSQL
+- Auth.js credentials auth
 - Vercel Blob
 - Vercel AI SDK
-- BLTCY gateway
+- BLTCY gateway for LLM, OCR, embeddings, and TTS
 
-## 当前能力
+## Repo Highlights
 
-- 用户名 + 密码注册登录
-- `SUPER_ADMIN` / `USER` 两级权限
-- 公共角色 / 私有角色隔离
-- 角色蒸馏、版本管理、角色聊天
-- 每个 `(userId, characterId)` 维度的长期记忆
-- 管理后台：用户、配额、调用统计、公共角色管理
-- 蒸馏模型固定为 `gpt-5.4`
-- 创建任务后台执行，状态可恢复
+Interesting places to explore:
 
-## 环境变量
+- [src/server/distillation.ts](src/server/distillation.ts)
+  - source-to-character pipeline
+- [src/server/chat.ts](src/server/chat.ts)
+  - conversation orchestration
+- [src/server/memory-service.ts](src/server/memory-service.ts)
+  - long-term memory extraction, summaries, and retrieval
+- [src/server/ingestion.ts](src/server/ingestion.ts)
+  - text extraction, OCR fallback, PDF handling
+- [src/app/create/page.tsx](src/app/create/page.tsx)
+  - background creation entry
+- [src/app/chat/[slug]/page.tsx](src/app/chat/[slug]/page.tsx)
+  - resumable chat UI entry
 
-复制 `.env.example` 到 `.env.local`：
-
-```bash
-NEXT_PUBLIC_APP_URL=https://aiplot.fun
-AUTH_SECRET=
-AUTH_TRUST_HOST=true
-
-BLTCY_BASE_URL=https://api.bltcy.ai
-BLTCY_API_KEY=
-QWEN_TTS_API_KEY=
-QWEN_TTS_URL=https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation
-QWEN_TTS_MODEL=qwen3-tts-instruct-flash
-
-DATABASE_URL=postgresql://...
-BLOB_READ_WRITE_TOKEN=
-
-ELEVENLABS_API_KEY=
-OPENAI_API_KEY=
-
-INITIAL_SUPER_ADMIN_USERNAME=
-INITIAL_SUPER_ADMIN_PASSWORD=
-
-DEFAULT_DISTILLATION_QUOTA=3
-DEFAULT_CHAT_QUOTA=500
-DEFAULT_TTS_QUOTA=20
-```
-
-## 本地启动
+## Local Development
 
 ```bash
 npm install
@@ -67,125 +212,52 @@ npm run seed
 npm run dev
 ```
 
-## 超级管理员初始化
+## Environment
 
-可通过两种方式初始化第一个管理员：
+Create `.env.local` from `.env.example`.
 
-1. 在 `.env.local` 中设置：
+Required in practice:
 
-```bash
-INITIAL_SUPER_ADMIN_USERNAME=admin
-INITIAL_SUPER_ADMIN_PASSWORD=strong-password
-```
+- `DATABASE_URL`
+- `AUTH_SECRET`
+- `BLTCY_API_KEY`
+- `BLOB_READ_WRITE_TOKEN`
 
-然后执行：
+Optional:
 
-```bash
-npm run seed
-```
+- `QWEN_TTS_API_KEY`
+- `OPENAI_API_KEY`
+- `INITIAL_SUPER_ADMIN_USERNAME`
+- `INITIAL_SUPER_ADMIN_PASSWORD`
 
-2. 或单独执行：
+## Privacy and Open-Source Safety
 
-```bash
-npm run init-admin
-```
+This repository is prepared for public sharing.
 
-规则：
-
-- 如果数据库里已存在 `SUPER_ADMIN`，脚本会跳过。
-- 仓库中不保存管理员明文密码。
-- 管理员密码始终以哈希形式存储。
-
-## 公共角色和私有角色
-
-- 普通用户创建角色时，后端强制保存为 `PRIVATE`。
-- 管理员创建角色时，后端自动保存为 `PUBLIC`。
-- 未登录用户可浏览首页、公共角色列表和公共角色详情。
-- 创建角色、聊天、TTS、个人中心、后台页面都要求登录。
-
-## 记忆系统
-
-记忆严格按 `(userId, characterId)` 隔离，不跨用户、不跨角色串数据。
-
-### 短期记忆
-
-- 聊天页默认恢复当前用户与当前角色的活跃会话。
-- Prompt 注入最近若干轮历史消息，保证上下文连续。
-
-### 长期记忆
-
-- 每轮对话完成后，系统从“用户消息 + 角色回复”中提取高价值信息。
-- 当前支持的记忆类型：
-  - `FACT`
-  - `PREFERENCE`
-  - `RELATIONSHIP`
-  - `EXPERIENCE`
-  - `TASK`
-- 记忆持久化写入 `Memory` 表。
-
-### 摘要记忆
-
-- 系统维护 `MemorySummary`，保存：
-  - 用户画像摘要
-  - 关系摘要
-  - 共同经历摘要
-- 聊天时优先注入摘要，而不是无限拼接全部历史消息。
-
-### 可检索记忆
-
-- 若 embedding 可用，会把记忆向量写入 `MemoryEmbedding`。
-- 每次聊天前，从当前 `(userId, characterId)` 范围内做相似度检索。
-- 若 embedding 不可用，退化为持久化 lexical 检索，但作用域仍严格隔离。
-
-## 配额规则
-
-- `distillationQuota`：角色蒸馏真正开始时扣减。
-- `chatQuota`：每次发送聊天消息时由后端校验并扣减。
-- `SUPER_ADMIN` 默认无限额。
-- 当前普通用户默认对话额度为 `500`。
-
-## 管理后台
-
-后台入口：
-
-- `/admin`
-- `/admin/users`
-- `/admin/quotas`
-- `/admin/usage`
-- `/admin/characters`
-
-管理员可以：
-
-- 查看所有用户
-- 启用 / 禁用账号
-- 修改默认配额
-- 按用户名或昵称筛选特定账号并提额
-- 查看蒸馏 / 聊天 / TTS 调用统计
-- 创建、编辑、删除公共角色
-
-## 隐私与 GitHub 上传建议
-
-如果要上传到 GitHub，建议只上传“公开版代码仓库”，不要上传以下内容：
+Sensitive local and deployment-only artifacts are excluded, including:
 
 - `.env*`
 - `.vercel/`
 - `.npm-cache/`
-- `.tmp*`
-- 本地日志
-- 任何数据库连接串、API Key、管理员初始化密码
+- local temp files
+- local logs
 
-当前 `.gitignore` 已排除这些敏感文件。
+The project keeps secrets out of Git and expects them to live in environment variables only.
 
-进一步建议：
+## Status
 
-- 所有密钥只放在部署平台环境变量中
-- 所有密码只保存哈希，不保存明文
-- 管理员初始化只通过环境变量或单独脚本完成
-- 生产数据库、Blob、Vercel 项目配置不进入仓库
+This is not a mockup repo.
 
-## 说明
+It already includes:
 
-- 所有 demo 内容已删除。
-- 不再提供路飞、孔子、韩立或任何预置名人 / 动漫角色。
-- 公共角色必须由管理员正式创建。
-- 私有角色和对应聊天记忆默认只对所有者本人可见。
+- authentication
+- admin tooling
+- usage tracking
+- resumable creation
+- production deployment
+- public/private character separation
+- long-memory chat
+
+## License
+
+Private / custom use unless a separate license is added.
