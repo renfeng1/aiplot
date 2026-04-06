@@ -1,208 +1,340 @@
 # AIPLOT.FUN
 
-资料蒸馏成 Ta，时间把对话酿成关系。
+> 资料蒸馏成 Ta，时间把对话酿成关系。
 
-AIPLOT.FUN is a production-style character distillation and long-memory chat app.  
-Upload documents, notes, screenshots, and photos, turn them into a living character, and keep the relationship growing through memory-aware conversation.
+一个不想只做「角色聊天 demo」的项目。
 
-## Why This Project Is Interesting
+你给它一堆资料：
 
-Most "AI character" demos stop at a prompt and a chat box.
+- 文档
+- 聊天记录
+- 截图
+- 照片
+- 只言片语的主观描述
 
-This project goes further:
+它不会只吐出一个 prompt，然后假装是一个角色。
 
-- It distills messy source material into a structured character with persona, knowledge, voice style, and boundaries.
-- It keeps memory per `user × character`, so the same public character can remember different people differently.
-- It separates public characters from private ones, making the app work like a real product instead of a toy demo.
-- It includes quota control, usage tracking, admin tools, resumable creation flows, and deployable production plumbing.
+它会尽量把那些碎片蒸馏成一个**像真的一样会说话、会记得你、会和你慢慢形成关系的 Ta**。
 
-If you care about AI product design, long-term memory systems, or design-to-product execution, this repo is built to be studied, extended, and shipped.
+不是一次性的问答，不是摆拍式的人设卡，而是一个会随着时间继续发酵的角色系统。
 
-## Core Experience
+---
 
-### 1. Distill raw material into a character
+## 这不是普通的 AI 角色项目
 
-Users can create a character from:
+很多项目停在这里：
 
-- pasted text
+> 给角色一段设定  
+> 接一个聊天接口  
+> 完成
+
+这个项目想做得更完整一点。
+
+在 AIPLOT 里，角色至少应该有四样东西：
+
+### 1. 有来源
+
+不是凭空捏一个性格。
+
+角色是从你上传的资料里蒸馏出来的，资料越丰富，Ta 就越立得住。
+
+### 2. 有关系
+
+不是对所有人都说同样的话。
+
+同一个公共角色，面对不同用户，会积累不同的记忆、关系、共同经历和说话习惯。
+
+### 3. 有时间感
+
+不是刷新页面就忘了你。
+
+聊天会持续保留，关系会慢慢推进，久了之后，Ta 说话的感觉会越来越像“你们之间已经聊过很多次”。
+
+### 4. 有产品形态
+
+不是三张 demo 卡片撑起一个首页。
+
+这个仓库已经去掉了预置 demo，做成了真正可上线、可管理、可扩展的产品结构：
+
+- 公共角色
+- 我的角色
+- 长期记忆
+- 配额系统
+- 管理后台
+
+---
+
+## 你可以用它做什么
+
+### 把人物资料蒸馏成一个可对话角色
+
+支持上传：
+
 - `.txt`
 - `.md`
 - `.docx`
 - `.pdf`
-- screenshots
-- photos
+- 截图
+- 照片
+- 直接粘贴文本
 
-The app extracts text, performs OCR when needed, chunks the material, retrieves relevant parts, and distills the result into a character card.
+系统会做：
 
-Each character includes:
+- 文本提取
+- OCR 识别
+- 目标人物相关内容抽取
+- 结构化蒸馏
+- 角色卡生成
+- 版本记录
 
-- identity and background
-- relationship framing toward the user
-- speaking style and tone
-- source-grounded memory summary
-- welcome message
-- voice style profile
+最后得到的是一个真正可聊天的角色，而不是一段静态设定。
 
-The distillation model is fixed to `gpt-5.4` for consistency.
+### 和公共角色长期聊天
 
-### 2. Chat that remembers
+管理员可以发布公共角色。
 
-The chat system is not just "append old messages into a prompt".
+所有用户都能进入聊天，但**每个用户和这个角色之间的记忆是独立的**。
 
-For every `(userId, characterId)` pair, the app maintains:
+也就是说：
 
-- short-term context from recent messages
-- long-term memories extracted from prior chats
-- rolling relationship summaries
-- retrieval-ready memory items with embeddings when available
+- 你和公共角色 A 的聊天，会形成你自己的关系轨迹
+- 别人和公共角色 A 的聊天，不会污染你的记忆
 
-That means:
+### 创建自己的私有角色
 
-- user A talking to public character X gets their own private memory trail
-- user B talking to the same public character X gets a separate one
-- user A talking to character Y does not leak into character X
+普通用户创建的角色默认是私有的。
 
-### 3. Product-style character system
+你可以把自己的资料、设定、故事、片段上传进去，把一个人物慢慢蒸馏出来，然后长期聊下去。
 
-The app has two character spaces:
+### 在角色还没生成完时继续做别的事
 
-- Public Characters
-  - created by admins
-  - available to all signed-in users
-  - ideal for site-wide featured characters
-- My Characters
-  - created by end users
-  - private by default
-  - fully isolated with their own conversation history and memory
+角色创建不是一次性卡死页面的流程。
 
-This makes the app feel like a real platform, not a preset-character showcase.
+现在支持：
 
-### 4. Background creation flow
+- 提交后后台继续蒸馏
+- 你可以离开创建页
+- 甚至可以点“新建角色”继续开新任务
+- 回到首页或“我的角色”时，仍然能看到：
+  - 创建中
+  - 已完成
+  - 失败
 
-Character creation runs in the background.
+这件事很小，但它会让项目从“实验功能”变成“能真的用”的产品。
 
-Users can:
+---
 
-- start a distillation job
-- leave the page
-- create another character
-- come back later and still see status
+## 页面一览
 
-The app preserves states such as:
+### 首页
 
-- creating
-- failed
-- completed
+首页不是“演示站”，而是产品入口。
 
-and surfaces them in the "My Characters" views.
+你会看到：
 
-## Pages
+- 核心主标语
+- 公共角色入口
+- 登录 / 注册入口
+- 已登录用户自己的角色状态回顾
 
-### Homepage
+### `/characters`
 
-The landing page is positioned as a real product:
+角色中心分成两栏：
 
-- featured hero message
-- public character discovery
-- private character status recap for signed-in users
+- 公共角色
+- 我的角色
 
-### Characters
+这里不是简单的列表页。
 
-`/characters` is split into:
+“我的角色”会明确告诉你某个角色：
 
-- Public Characters
-- My Characters
+- 还在蒸馏
+- 已经完成
+- 上次失败了
 
-The "My Characters" section shows creation states so unfinished jobs are never silently lost.
+### `/create`
 
-### Create
+创建页是这个项目里最像“工作台”的地方。
 
-`/create` supports:
+它负责：
 
-- source upload
-- pasted text
-- source format selection
-- relationship hint input
-- resumable background creation
+- 上传资料
+- 录入角色描述
+- 录入关系锚点
+- 选择文本形态
+- 启动后台蒸馏
+- 恢复中断任务
+- 在已有任务后台执行时，继续新建下一个角色
 
-Admins automatically create public characters here.  
-Regular users automatically create private characters.
+### `/chat/[slug]`
 
-### Chat
+聊天页不是单纯的输入框加回复框。
 
-`/chat/[slug]` restores the active conversation for the current user and character, and injects:
+每次回复前，系统会综合：
 
-- recent chat context
-- character profile
-- relationship summary
-- retrieved long-term memories
-- source evidence
+- 角色本身的人设
+- 最近对话
+- 长期关系摘要
+- 检索到的相关记忆
+- 资料证据
+- 历史纠错
 
-### Me
+所以它更像“带记忆的关系聊天”，而不是普通对话接口。
 
-`/me` gives each user a lightweight dashboard for:
+### `/me`
 
-- remaining quotas
-- recent usage
-- recent characters
+个人中心会给你一个很轻的面板，能快速看到：
 
-### Admin
+- 剩余蒸馏次数
+- 剩余聊天次数
+- 最近使用情况
+- 最近角色
 
-The admin side includes:
+### `/admin`
 
-- user management
-- per-user quota adjustment
-- default quota configuration
-- usage analytics
-- public character management
+后台是为了让整个产品能真正运营，而不是摆设。
 
-It exists to support the product, not to dominate the product.
+管理员可以：
 
-## What Makes The Memory Layer Different
+- 查看用户
+- 调整配额
+- 查看调用统计
+- 创建 / 编辑 / 删除公共角色
 
-The memory system is scoped by `userId + characterId`.
+但这个项目的重点始终不是后台，而是角色体验本身。
 
-It stores:
+---
+
+## 这个项目最想解决的问题
+
+### 问题 1：AI 角色总是“像一个模板”
+
+很多角色项目会让你一眼就看出那是同一个模型在说话。
+
+这里的目标是：
+
+> 让角色首先像 Ta，  
+> 然后才像一个 AI。
+
+### 问题 2：聊天久了就失忆
+
+短期上下文一长就爆，老记忆又召不回来。
+
+这里的做法是把记忆拆开：
+
+- 短期记忆
+- 长期记忆
+- 摘要记忆
+- 可检索记忆
+
+不是把所有聊天记录粗暴塞进 prompt，而是让记忆像一层真正可管理的系统。
+
+### 问题 3：公共角色很难同时服务很多用户
+
+同一个公共角色面对所有用户时，最容易出现的问题就是串数据。
+
+这个项目直接按 `(userId, characterId)` 维度隔离记忆。
+
+所以公共角色不再只是“所有人共享一套历史”，而是“所有人共享一个角色，但各自拥有自己的关系轨迹”。
+
+---
+
+## 功能亮点
+
+### 长期记忆系统
+
+系统会维护：
 
 - `Memory`
-  - atomic long-term memory items
 - `MemorySummary`
-  - rolling summary of user profile, relationship progression, and shared history
 - `MemoryEmbedding`
-  - retrieval vectors for semantic recall
 
-This keeps the app usable over long chats without letting prompts explode in size.
+每轮聊天后，自动从对话中抽取值得保留的内容，例如：
 
-## Tech Stack
+- 用户事实
+- 偏好
+- 关系状态
+- 共同经历
+- 长期任务
+
+### 资料驱动的角色蒸馏
+
+上传的内容不会直接一股脑塞进模型。
+
+中间会经过：
+
+- 解析
+- 清洗
+- 分块
+- 目标人物筛选
+- 结构化蒸馏
+
+所以角色更稳定，也更容易扩展。
+
+### 后台任务式创建
+
+角色蒸馏是后台继续跑的，不会因为你切页面就中断。
+
+这让它更接近真实产品体验，而不是“只适合演示的单页流程”。
+
+### TTS 与角色语气
+
+项目支持角色语音朗读，并做了缓存与失败兜底，尽量减少“有时候能播、有时候不能播”的波动。
+
+### 固定蒸馏模型
+
+为了保证产出稳定性，当前角色蒸馏模型固定为：
+
+- `gpt-5.4`
+
+这不是为了炫技术，而是为了让角色风格尽量不要因为用户随手切模型而飘掉。
+
+---
+
+## 适合谁看这个项目
+
+如果你在做这些方向，这个仓库会很有参考价值：
+
+- AI 陪伴 / AI 角色产品
+- 长期记忆型 Agent / Chat 应用
+- 多租户角色系统
+- 从 demo 走向正式产品的 AI 应用
+- 面向真实用户的 Prompt + Memory + Product 组合设计
+
+---
+
+## 技术实现
+
+如果你想往下挖，几个关键文件在这里：
+
+- [src/server/distillation.ts](src/server/distillation.ts)
+  - 角色蒸馏主流程
+- [src/server/chat.ts](src/server/chat.ts)
+  - 聊天编排与持久化
+- [src/server/memory-service.ts](src/server/memory-service.ts)
+  - 长期记忆提取、摘要与检索
+- [src/server/ingestion.ts](src/server/ingestion.ts)
+  - 文本提取、OCR、PDF 解析
+- [src/app/create/page.tsx](src/app/create/page.tsx)
+  - 创建页入口
+- [src/app/chat/[slug]/page.tsx](src/app/chat/[slug]/page.tsx)
+  - 聊天页入口
+
+技术栈：
 
 - Next.js 16.2.2
 - React 19
 - TypeScript
 - Prisma 7
 - PostgreSQL
-- Auth.js credentials auth
+- Auth.js
 - Vercel Blob
 - Vercel AI SDK
-- BLTCY gateway for LLM, OCR, embeddings, and TTS
+- BLTCY gateway
 
-## Repo Highlights
+---
 
-Interesting places to explore:
-
-- [src/server/distillation.ts](src/server/distillation.ts)
-  - source-to-character pipeline
-- [src/server/chat.ts](src/server/chat.ts)
-  - conversation orchestration
-- [src/server/memory-service.ts](src/server/memory-service.ts)
-  - long-term memory extraction, summaries, and retrieval
-- [src/server/ingestion.ts](src/server/ingestion.ts)
-  - text extraction, OCR fallback, PDF handling
-- [src/app/create/page.tsx](src/app/create/page.tsx)
-  - background creation entry
-- [src/app/chat/[slug]/page.tsx](src/app/chat/[slug]/page.tsx)
-  - resumable chat UI entry
-
-## Local Development
+## 本地启动
 
 ```bash
 npm install
@@ -212,52 +344,56 @@ npm run seed
 npm run dev
 ```
 
-## Environment
+## 环境变量
 
-Create `.env.local` from `.env.example`.
+复制 `.env.example` 到 `.env.local`。
 
-Required in practice:
+核心必填项：
 
 - `DATABASE_URL`
 - `AUTH_SECRET`
 - `BLTCY_API_KEY`
 - `BLOB_READ_WRITE_TOKEN`
 
-Optional:
+可选项：
 
 - `QWEN_TTS_API_KEY`
 - `OPENAI_API_KEY`
 - `INITIAL_SUPER_ADMIN_USERNAME`
 - `INITIAL_SUPER_ADMIN_PASSWORD`
 
-## Privacy and Open-Source Safety
+---
 
-This repository is prepared for public sharing.
+## 隐私与开源安全
 
-Sensitive local and deployment-only artifacts are excluded, including:
+这个仓库已经按公开发布做了处理。
+
+默认不上传：
 
 - `.env*`
 - `.vercel/`
 - `.npm-cache/`
-- local temp files
-- local logs
+- `.tmp*`
+- 本地日志
+- 数据库连接串
+- API Key
+- 管理员初始化密码
 
-The project keeps secrets out of Git and expects them to live in environment variables only.
+建议继续保持：
 
-## Status
+- 所有密钥只放在部署平台环境变量里
+- 所有密码只保存哈希
+- 管理员初始化只通过环境变量或单独脚本完成
 
-This is not a mockup repo.
+---
 
-It already includes:
+## 如果你觉得这个项目值得一个 Star
 
-- authentication
-- admin tooling
-- usage tracking
-- resumable creation
-- production deployment
-- public/private character separation
-- long-memory chat
+不是因为它“功能很多”。
 
-## License
+而是因为它试图认真回答一个问题：
 
-Private / custom use unless a separate license is added.
+> 如果 AI 角色不只是一次性的聊天玩具，  
+> 它应该怎样真正进入“关系”和“时间”？
+
+如果这个方向也打动你，欢迎 star、fork，或者把它继续做成你自己的版本。
