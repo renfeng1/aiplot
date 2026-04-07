@@ -6,7 +6,6 @@ import { signOut, useSession } from "next-auth/react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { emergencyMaintenance } from "@/lib/maintenance";
 
 function initials(value: string) {
   return value.slice(0, 2).toUpperCase();
@@ -14,14 +13,6 @@ function initials(value: string) {
 
 export function HeaderAuth() {
   const { data, status } = useSession();
-
-  if (emergencyMaintenance) {
-    return (
-      <Button type="button" variant="outline" className="rounded-full" disabled>
-        临时维护中
-      </Button>
-    );
-  }
 
   if (status === "loading") {
     return null;
