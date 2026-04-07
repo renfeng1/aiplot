@@ -28,6 +28,53 @@ export type CharacterDraftInput = Pick<
   | "sourceFormatHint"
 >;
 
+const characterCardSelect = {
+  id: true,
+  slug: true,
+  title: true,
+  description: true,
+  shortDescription: true,
+  type: true,
+  visibility: true,
+  tags: true,
+  creationStatus: true,
+  creationStage: true,
+  creationProgress: true,
+  creationMessage: true,
+  lastError: true,
+  draftInput: true,
+  currentVersionId: true,
+  lastHeartbeatAt: true,
+} as const;
+
+const characterAccessSelect = {
+  id: true,
+  userId: true,
+  deletedAt: true,
+  slug: true,
+  title: true,
+  description: true,
+  shortDescription: true,
+  type: true,
+  tags: true,
+  visibility: true,
+  disclaimer: true,
+  currentVersionId: true,
+  currentVersion: {
+    select: {
+      id: true,
+      personaPrompt: true,
+      memorySummary: true,
+      welcomeMessage: true,
+      characterProfile: true,
+    },
+  },
+  voiceProfiles: {
+    orderBy: { createdAt: "desc" as const },
+    take: 1,
+  },
+} as const;
+
 function normalizePersistedCharacterState<T extends {
   creationStatus: CreationStatus;
   currentVersionId: string | null;
@@ -247,14 +294,7 @@ export async function getOwnedCharacterById(options: {
       deletedAt: null,
       userId,
     },
-    include: {
-      currentVersion: true,
-      sourceFiles: true,
-      voiceProfiles: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-    },
+    select: characterCardSelect,
   });
 
   return character ? normalizePersistedCharacterState(character) : null;
@@ -339,9 +379,7 @@ export async function listOwnedCharacters(options: {
       deletedAt: null,
       userId,
     },
-    include: {
-      currentVersion: true,
-    },
+    select: characterCardSelect,
     orderBy: { updatedAt: "desc" },
     take: options.take,
   });
@@ -360,12 +398,14 @@ export async function listPublicCharacters(options?: { take?: number }) {
       creationStatus: "READY",
       currentVersionId: { not: null },
     },
-    include: {
-      currentVersion: true,
-      voiceProfiles: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      shortDescription: true,
+      tags: true,
+      currentVersionId: true,
     },
     orderBy: { updatedAt: "desc" },
     take: options?.take,
@@ -381,8 +421,12 @@ export async function listAdminPublicCharacters() {
       deletedAt: null,
       visibility: "PUBLIC",
     },
-    include: {
-      currentVersion: true,
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      shortDescription: true,
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -397,14 +441,7 @@ export async function ensureCharacterAccess(options: {
   const db = getDb();
   const character = await db.character.findUnique({
     where: { slug: options.slug },
-    include: {
-      currentVersion: true,
-      voiceProfiles: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-      sourceFiles: true,
-    },
+    select: characterAccessSelect,
   });
 
   if (!character || character.deletedAt) {

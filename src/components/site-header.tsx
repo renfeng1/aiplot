@@ -4,12 +4,15 @@ import { Sparkles } from "lucide-react";
 import { HeaderAuth } from "@/components/header-auth";
 import { MobileSiteMenu } from "@/components/mobile-site-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { emergencyMaintenance } from "@/lib/maintenance";
 
-const navItems = [
-  { href: "/" as const, label: "首页" },
-  { href: "/characters" as const, label: "角色" },
-  { href: "/create" as const, label: "创建角色" },
-];
+const navItems = emergencyMaintenance
+  ? [{ href: "/" as const, label: "首页" }]
+  : [
+      { href: "/" as const, label: "首页" },
+      { href: "/characters" as const, label: "角色" },
+      { href: "/create" as const, label: "创建角色" },
+    ];
 
 export function SiteHeader() {
   return (
@@ -39,6 +42,11 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
+          {emergencyMaintenance ? (
+            <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs text-amber-700 dark:text-amber-300">
+              临时维护中
+            </span>
+          ) : null}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">

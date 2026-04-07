@@ -50,16 +50,23 @@ function statusLabel(status?: CharacterCard["creationStatus"]) {
 export function HomeShell({
   isSignedIn,
   publicCharacters,
+  serviceWarning,
   ownedCharacters,
 }: {
   isSignedIn: boolean;
   publicCharacters: CharacterCard[];
+  serviceWarning?: string | null;
   ownedCharacters: CharacterCard[];
 }) {
   return (
     <div className="pb-20">
       <SiteHeader />
       <main className="page-shell mt-6 space-y-10 sm:mt-10">
+        {serviceWarning ? (
+          <section className="surface border-amber-500/30 bg-amber-500/8 px-5 py-4 text-sm leading-7 text-amber-950 sm:px-6 dark:text-amber-100">
+            {serviceWarning}
+          </section>
+        ) : null}
         <section className="surface relative overflow-hidden px-5 py-8 sm:px-8 sm:py-10 lg:px-12 lg:py-14">
           <div className="hero-grid absolute inset-0 opacity-70" />
           <div className="relative grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
@@ -77,9 +84,9 @@ export function HomeShell({
               </Badge>
               <div className="space-y-4">
                 <h1 className="max-w-4xl text-balance font-heading text-5xl leading-[0.96] sm:text-6xl lg:text-7xl">
-                  资料蒸馏成Ta，
+                  资料凝成 Ta，
                   <br />
-                  时间把对话酿成关系
+                  时光酿出我们。
                 </h1>
                 <p className="max-w-2xl text-balance text-base leading-7 text-muted-foreground sm:text-lg">
                   上传文本、文档、截图和照片，生成有角色设定、可持续记忆、可长期对话的正式角色。
@@ -273,4 +280,3 @@ export function HomeShell({
     </div>
   );
 }
-
